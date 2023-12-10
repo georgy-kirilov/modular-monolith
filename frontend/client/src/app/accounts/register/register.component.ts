@@ -29,10 +29,7 @@ export class RegisterComponent {
   register(): void {
     this.http.post<any>('api/accounts/register', this.input).subscribe({
       next: _ => this.accountRequiresConfirmation = true,
-      error: err => {
-        console.error(err);
-        this.errors.set(err);
-      }
+      error: err => this.errors.set(err)
     });
   }
 

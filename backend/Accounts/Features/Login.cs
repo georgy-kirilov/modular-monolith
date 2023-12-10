@@ -1,13 +1,16 @@
-using Accounts.Database.Entities;
-using Accounts.Services;
-using Shared.Api;
-using FluentValidation.Results;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
+using MassTransit;
 using FluentValidation;
+using FluentValidation.Results;
+using Accounts.Database.Entities;
+using Accounts.Services;
+using Shared.Api;
 using Shared.Authentication;
+using Shared.Validation;
 
 namespace Accounts.Features;
 
@@ -15,8 +18,7 @@ public static class Login
 {
     public sealed class Endpoint : IEndpoint
     {
-        public void Map(IEndpointRouteBuilder builder) =>
-            builder
+        public void Map(IEndpointRouteBuilder builder) => builder
             .MapPost("accounts/login", Handle)
             .AllowAnonymous()
             .WithTags("Accounts")
@@ -29,40 +31,33 @@ public static class Login
         HttpContext http,
         UserManager<User> userManager,
         IdentityOptions identityOptions,
+        IBus bus,
         JwtSettings jwtSettings,
         JwtAuthService jwtAuthService)
     {
-        var validationResult = validator.Validate(request);
+        var validationResult = await validator.ValidateAsync(request);
 
         if (!validationResult.IsValid)
         {
-            return Results.BadRequest(validationResult.Errors);
+            return validationResult.ToValidationProblem();
         }
 
         var user = await userManager.FindByEmailAsync(request.Email);
 
         if (user is null)
         {
-            return Results.BadRequest(new ValidationFailure[]
-            {
-                Errors.InvalidLoginCredentials
-            });
+            return Errors.InvalidLoginCredentials.ToValidationProblem();
         }
 
         if (!await userManager.CheckPasswordAsync(user, request.Password))
         {
-            return Results.BadRequest(new ValidationFailure[]
-            {
-                Errors.InvalidLoginCredentials
-            });
+            return Errors.InvalidLoginCredentials.ToValidationProblem();
         }
 
         if (identityOptions.SignIn.RequireConfirmedEmail && !user.EmailConfirmed)
         {
-            return Results.BadRequest(new ValidationFailure[]
-            {
-                Errors.ConfirmedEmailRequired
-            });
+            await bus.Publish(new EmailConfirmationRequiredMessage(user));
+            return Errors.ConfirmedEmailRequired.ToValidationProblem();
         }
 
         var token = jwtAuthService.GenerateJwtToken(user.Id, user.UserName!);
@@ -102,7 +97,21 @@ public static class Login
         {
             PropertyName = string.Empty,
             ErrorCode = "ConfirmedEmailRequired",
-            ErrorMessage = "You need to confirm your email address."
+            ErrorMessage = "You need to confirm your email address. Check your inbox for a verification message."
         };
+    }
+
+    public sealed record EmailConfirmationRequiredMessage(User User);
+
+    public sealed class EmailConfirmationRequiredConsumer(
+        ILogger<EmailConfirmationRequiredConsumer> logger,
+        AccountEmailService emailService)
+        : IConsumer<EmailConfirmationRequiredMessage>
+    {
+        public async Task Consume(ConsumeContext<EmailConfirmationRequiredMessage> context)
+        {
+            logger.LogInformation("Email confirmation for user with ID '{Id}' is required before logging in.", context.Message.User.Id);
+            await emailService.SendEmailConfirmation(context.Message.User);
+        }
     }
 }

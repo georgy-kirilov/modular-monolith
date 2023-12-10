@@ -1,16 +1,17 @@
-using Accounts.Database.Entities;
-using Shared.Api;
-using MassTransit;
-using FluentValidation;
-using FluentValidation.Results;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using Accounts.Database;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using MassTransit;
+using FluentValidation;
+using FluentValidation.Results;
+using Shared.Api;
+using Accounts.Database;
+using Accounts.Database.Entities;
+using Accounts.Services;
+using Shared.Validation;
 
 namespace Accounts.Features;
 
@@ -18,8 +19,7 @@ public static class Register
 {
     public sealed class Endpoint : IEndpoint
     {
-        public void Map(IEndpointRouteBuilder builder) =>
-            builder
+        public void Map(IEndpointRouteBuilder builder) => builder
             .MapPost("accounts/register", Handle)
             .AllowAnonymous()
             .WithTags("Accounts");
@@ -36,7 +36,7 @@ public static class Register
 
         if (!validationResult.IsValid)
         {
-            return Results.BadRequest(validationResult.Errors);
+            return validationResult.ToValidationProblem();
         }
 
         var user = new User
@@ -103,6 +103,20 @@ public static class Register
             RuleFor(x => x.ConfirmPassword)
                 .Equal(x => x.Password)
                 .WithMessage("Passwords do not match.");
+        }
+    }
+
+    public sealed record UserAccountCreatedMessage(User User);
+
+    public sealed class UserAccountCreatedConsumer(
+        AccountEmailService emailService,
+        ILogger<UserAccountCreatedConsumer> logger) : IConsumer<UserAccountCreatedMessage>
+    {
+        public async Task Consume(ConsumeContext<UserAccountCreatedMessage> context)
+        {
+            logger.LogInformation("A user account was created with ID '{UserId}'.", context.Message.User.Id);
+
+            await emailService.SendEmailConfirmation(context.Message.User);
         }
     }
 }
