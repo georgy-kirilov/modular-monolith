@@ -1,0 +1,28 @@
+# Use dotnet sdk for restore steps
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS restore
+
+WORKDIR /src
+
+# Copy all source files
+COPY . .
+
+# Restore dependencies
+RUN dotnet restore ./Api/Api.csproj
+
+# Use the same image for development
+FROM restore AS development
+
+# Set environment variables
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENV ASPNETCORE_URLS=http://+:80
+ENV DOTNET_USE_POLLING_FILE_WATCHER=1
+
+# Set working directory
+WORKDIR /src/Api
+
+# Install EF tool and add it to PATH
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+# Watch for changes and restart app
+ENTRYPOINT ["dotnet", "watch", "run", "--no-restore", "--no-hot-reload"]

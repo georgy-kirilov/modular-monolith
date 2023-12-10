@@ -1,0 +1,23 @@
+@if (emailSuccessfullyConfirmed) {
+  <div class="flex items-center justify-center min-h-screen bg-background-default">
+    <div class="max-w-md w-full p-8 bg-background-card shadow-xl rounded-lg text-center">
+      <h1 class="text-3xl font-header text-primary mb-4">Email Confirmed!</h1>
+      <p class="text-text-secondary text-base font-body mb-6">
+        Your email has been successfully confirmed. You can now proceed to use our services.
+      </p>
+      <a routerLink="/accounts/login" class="text-blue-600 hover:text-blue-800 underline font-semibold">
+        Log into your account
+      </a>
+    </div>
+  </div>
+}
+@else {
+  <div class="flex items-center justify-center min-h-screen bg-background-default">
+    <div class="max-w-md w-full p-8 bg-background-card shadow-xl rounded-lg text-center">
+      <h1 class="text-3xl font-header text-primary mb-4">Failed to Confirm Email</h1>
+      <div class="text-secondary text-sm mb-6">
+        <validation [errors]="errors" />
+      </div>
+    </div>
+  </div>
+}

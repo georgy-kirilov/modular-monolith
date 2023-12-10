@@ -1,0 +1,30 @@
+<div>
+  <nav class="bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo/Brand Name -->
+        <a routerLink="/" class="text-xl text-white font-semibold mr-4">ModMonTemplate</a>
+        <div class="hidden md:flex md:items-center md:space-x-4">
+          @if (authService.isLoggedIn()) {
+            <!-- Links for Logged-in Users -->
+            <a routerLink="/" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 mx-3 rounded-md text-m font-semibold font-medium">Dashboard</a>
+          }
+        </div>
+        <div class="ml-auto">
+          @if (authService.isLoggedIn()) {
+            <!-- Logout Button -->
+            <div>
+              <a routerLink="/accounts/me" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 mx-3 rounded-md text-m font-semibold font-medium">Account</a>
+              <button class="bg-primary hover:bg-secondary hover:text-black text-white px-3 py-2 rounded-md text-m font-medium" (click)="authService.logout()">Logout</button>
+            </div>
+          } @else {
+            <!-- Login and Register Links -->
+            <a routerLink="/accounts/login" class="bg-primary hover:bg-secondary hover:text-black text-white px-3 py-2 rounded-md text-m font-medium">Login</a>
+            <a routerLink="/accounts/register" class="ml-3 bg-secondary hover:bg-primary hover:text-white text-black px-3 py-2 rounded-md text-m font-medium">Register</a>
+          }
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>
+<router-outlet></router-outlet>

@@ -1,0 +1,8 @@
+<div class="p-6">
+  @if (authService.isLoggedIn()) {
+    <h1 class="text-4xl font-bold text-gray-800">Welcome, {{ userInfo()?.username }}!</h1>
+  }
+  @else {
+    <h1 class="text-4xl font-bold text-gray-800">Hello, Anonymous!</h1>
+  }
+</div>

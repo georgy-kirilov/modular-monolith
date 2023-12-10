@@ -1,0 +1,21 @@
+# Step 1: Use the official Node.js runtime as a parent image
+FROM node:20.10.0
+
+# Step 2: Set the working directory
+WORKDIR /app
+
+# Step 3: Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Step 4: Install any needed packages including Angular CLI globally
+RUN npm install
+RUN npm install -g @angular/cli
+
+# Step 5: Copy the rest of the client's source code
+COPY . .
+
+# Step 6: Expose port 80 for the Angular app
+EXPOSE 80
+
+# Step 7: Run the app when the container launches
+CMD ["npm", "start"]

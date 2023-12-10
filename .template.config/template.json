@@ -1,0 +1,21 @@
+{
+  "author": "Da Gangstacoder",
+  "classifications": ["Monolith", "Docker", "DotNet", "Angular"],
+  "name": "Modular Monolith Project Template",
+  "identity": "Gangstacoding.ModularMonolithTemplate",
+  "shortName": "modmon",
+  "tags": {
+    "type": "project",
+    "language": "C#"
+  },
+  "sourceName": "ModMonTemplate",
+  "preferNameDirectory": false,
+  "symbols": {
+    "service": {
+      "type": "parameter",
+      "datatype": "string",
+      "replaces": "modmontemplate",
+      "fileRename": "modmontemplate"
+    }
+  }
+}
