@@ -10,12 +10,21 @@ services:
       - ./docker-dev-volumes/nginx/ssl/ssl.crt:/etc/nginx/ssl/ssl.crt:ro
       - ./docker-dev-volumes/nginx/ssl/ssl.key:/etc/nginx/ssl/ssl.key:ro
 
+  client:
+    build:
+      dockerfile: Dockerfile.development
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend/client:/app
+      - /app/node_modules
+
   api:
     build:
       dockerfile: Api/Dockerfile.development
     restart: on-failure
     volumes:
-      - ./docker-dev-volumes/api/data-protection/certificates:/app/certificates:ro
+      - ./docker-dev-volumes/backend/shared/data-protection/certificates:/app/certificates:ro
       # Enable hot reloading
       - ./backend:/src:delegated
       # Improve image build speed
@@ -25,12 +34,3 @@ services:
       - /src/Shared/bin
       - /src/Accounts/obj
       - /src/Accounts/bin
-
-  client:
-    build:
-      dockerfile: Dockerfile.development
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-    volumes:
-      - ./frontend/client:/app
-      - /app/node_modules

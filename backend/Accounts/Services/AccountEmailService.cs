@@ -1,14 +1,16 @@
 using System.Net;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using HandlebarsDotNet;
 using Shared.Email;
-using Accounts.Database.Entities;
 using Shared.Configuration;
+using Accounts.Database.Entities;
 
 namespace Accounts.Services;
 
 public sealed class AccountEmailService(
+    IConfiguration configuration,
     FilePathResolver filePathResolver,
     UserManager<User> userManager,
     IEmailSender emailSender,
@@ -19,7 +21,8 @@ public sealed class AccountEmailService(
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = WebUtility.UrlEncode(token);
 
-        var url = $"http://localhost:8080/accounts/email-confirmation?userId={user.Id}&token={encodedToken}";
+        var baseAddress = configuration.GetValueOrThrow<string>("APP_BASE_ADDRESS");
+        var url = $"{baseAddress}/accounts/email-confirmation?userId={user.Id}&token={encodedToken}";
         var html = await RenderAsync("ConfirmEmailTemplate", new() { ["ConfirmationUrl"] = url });
 
         var emailSent = await emailSender.SendEmailAsync(

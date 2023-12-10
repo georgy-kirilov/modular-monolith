@@ -45,6 +45,7 @@ services:
     environment:
       - JWT_KEY
       - DATA_PROTECTION_CERTIFICATE_PASSWORD
+      - APP_BASE_ADDRESS
       - EMAIL_API_KEY
       - EMAIL_FROM_ADDRESS
       - DB_USER
@@ -53,8 +54,8 @@ services:
       - RABBITMQ_USER
       - RABBITMQ_PASSWORD
     volumes:
-      - ${VOLUMES_PATH}/api/data-protection/keys:/root/.aspnet/DataProtection-Keys
-      - ${VOLUMES_PATH}/api/data-protection/certificates:/app/certificates
+      - ${VOLUMES_PATH}/backend/shared/data-protection/keys:/root/.aspnet/DataProtection-Keys
+      - ${VOLUMES_PATH}/backend/shared/data-protection/certificates:/app/certificates
     depends_on:
       db:
         condition: service_healthy
