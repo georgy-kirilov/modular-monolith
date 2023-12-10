@@ -26,3 +26,11 @@ Generate Seq password hash:
 ```powershell
 echo 'String1@' | docker run --rm -i datalust/seq config hash
 ```
+
+### Generate data protection certificate
+
+```
+openssl req -x509 -newkey rsa:4096 -sha256 -days 36525 -nodes -keyout data-protection.key -out data-protection.crt -subj "/CN=local"
+
+openssl pkcs12 -export -out data-protection.pfx -inkey data-protection.key -in data-protection.crt
+```

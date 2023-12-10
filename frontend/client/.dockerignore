@@ -1,0 +1,27 @@
+# Node modules
+node_modules
+
+# Angular build output
+/dist
+
+# Logs
+logs
+*.log
+
+# Editor directories and files
+.editorconfig
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Other
+.git
+.gitignore
+README.md
+LICENSE
+.dockerignore
