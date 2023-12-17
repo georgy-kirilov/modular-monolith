@@ -1,13 +1,13 @@
-using Accounts.Database;
-using Accounts.Database.Entities;
-using Accounts.Services;
-using Shared.Configuration;
-using Shared.Database;
-using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using MassTransit;
+using FluentValidation;
+using Shared.Configuration;
+using Shared.Database;
+using Accounts.Database;
+using Accounts.Database.Entities;
+using Accounts.Services;
+using Accounts.Settings;
 
 namespace Accounts;
 
@@ -22,15 +22,15 @@ public static class ModuleRegistration
             .AddTransient<JwtAuthService>()
             .AddTransient<AccountEmailService>();
 
-        var identityOptions = configuration.GetValueOrThrow<IdentityOptions>("Accounts:Identity");
+        var accountSettings = configuration.GetValueOrThrow<AccountSettings>(AccountSettings.Section);
 
         services
-            .AddSingleton(identityOptions)
+            .AddSingleton(accountSettings)
             .AddIdentityCore<User>(options =>
             {
-                options.Password = identityOptions.Password;
-                options.User = identityOptions.User;
-                options.SignIn = identityOptions.SignIn;
+                options.Password = accountSettings.Password;
+                options.User = accountSettings.User;
+                options.SignIn = accountSettings.SignIn;
             })
             .AddRoles<Role>()
             .AddEntityFrameworkStores<AccountsDbContext>()

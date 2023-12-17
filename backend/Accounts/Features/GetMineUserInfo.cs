@@ -1,10 +1,11 @@
-using Accounts.Database.Entities;
-using Shared.Api;
-using Shared.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
+using Shared.Api;
+using Shared.Authentication;
+using Shared.Validation;
+using Accounts.Database.Entities;
 
 namespace Accounts.Features;
 
@@ -22,13 +23,14 @@ public static class GetMineUserInfo
     {
         var userId = http.User.GetUserId().ToString();
 
-        var user = await userManager.FindByIdAsync(userId) ?? throw new InvalidOperationException();
+        var user = await userManager.FindByIdAsync(userId);
 
-        return Results.Ok(new Response
-        (
-            user.Email,
-            user.UserName
-        ));
+        if (user is null)
+        {
+            return new Error("UserNotFound", "User was not found.").ToValidationProblem();
+        }
+
+        return new Response(user.Email, user.UserName).ToOkResult();
     }
 
     public sealed record Response(string? Email, string? Username);

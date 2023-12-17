@@ -1,11 +1,11 @@
-using Accounts.Database.Entities;
-using Accounts.Services;
-using Shared.Api;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
-using FluentValidation.Results;
+using Shared.Api;
+using Shared.Validation;
+using Accounts.Database.Entities;
+using Accounts.Services;
 
 namespace Accounts.Features;
 
@@ -23,23 +23,17 @@ public static class SendEmailConfirmation
     public static async Task<IResult> Handle(
         Request request,
         UserManager<User> userManager,
-        AccountEmailService accountEmailService)
+        AccountEmailService accountEmailService,
+        CancellationToken cancellationToken)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
 
         if (user is null)
         {
-            return Results.BadRequest(new ValidationFailure[]
-            {
-                new()
-                {
-                    ErrorCode = "UserNotFound",
-                    ErrorMessage = "No user with such email was found."
-                }
-            });
+            return new Error("UserNotFound", "No user with such email was found.").ToValidationProblem();
         }
 
-        await accountEmailService.SendEmailConfirmation(user);
+        await accountEmailService.SendEmailConfirmation(user, cancellationToken);
 
         return Results.Ok();
     }

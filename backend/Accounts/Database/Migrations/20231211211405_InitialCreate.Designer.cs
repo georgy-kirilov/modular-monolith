@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Accounts.Database.Migrations
 {
     [DbContext(typeof(AccountsDbContext))]
-    [Migration("20231123132824_InitialCreate")]
+    [Migration("20231211211405_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -82,6 +82,10 @@ namespace Accounts.Database.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean")
                         .HasColumnName("email_confirmed");
+
+                    b.Property<DateTimeOffset?>("LastEmailConfirmationSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_email_confirmation_sent_at");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")

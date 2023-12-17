@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using MassTransit;
 using FluentValidation;
-using FluentValidation.Results;
-using Accounts.Database.Entities;
-using Accounts.Services;
 using Shared.Api;
 using Shared.Authentication;
 using Shared.Validation;
+using Accounts.Database.Entities;
+using Accounts.Services;
+using Accounts.Settings;
 
 namespace Accounts.Features;
 
@@ -28,14 +28,15 @@ public static class Login
     public static async Task<IResult> Handle(
         Request request,
         Validator validator,
-        HttpContext http,
         UserManager<User> userManager,
-        IdentityOptions identityOptions,
+        HttpContext httpContext,
+        AccountSettings accountSettings,
         IBus bus,
         JwtSettings jwtSettings,
-        JwtAuthService jwtAuthService)
+        JwtAuthService jwtAuthService,
+        CancellationToken cancellationToken)
     {
-        var validationResult = await validator.ValidateAsync(request);
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -54,52 +55,60 @@ public static class Login
             return Errors.InvalidLoginCredentials.ToValidationProblem();
         }
 
-        if (identityOptions.SignIn.RequireConfirmedEmail && !user.EmailConfirmed)
+        if (user.RequireEmailConfirmation(accountSettings.SignIn.RequireConfirmedEmail))
         {
-            await bus.Publish(new EmailConfirmationRequiredMessage(user));
-            return Errors.ConfirmedEmailRequired.ToValidationProblem();
+            await bus.Publish(new EmailConfirmationRequiredMessage(user), cancellationToken);
+            return Errors.EmailConfirmationRequired.ToValidationProblem();
         }
 
         var token = jwtAuthService.GenerateJwtToken(user.Id, user.UserName!);
 
         if (request.StoreJwtInCookie)
         {
-            jwtAuthService.AppendJwtAuthCookie(http, token);
+            jwtAuthService.AppendJwtAuthCookie(httpContext, token);
         }
 
         var response = new Response(token, jwtSettings.LifetimeInSeconds);
-        return Results.Ok(response);        
+        return Results.Ok(response);
     }
+
+    public sealed record Request
+    (
+        string Email,
+        string Password,
+        bool StoreJwtInCookie
+    );
 
     public sealed class Validator : AbstractValidator<Request>
     {
         public Validator()
         {
-            RuleFor(x => x.Email).NotEmpty();
-            RuleFor(x => x.Password).NotEmpty();
+            RuleFor(x => x.Email)
+                .NotEmpty()
+                .WithMessage("You need to enter your email address.");
+
+            RuleFor(x => x.Password)
+                .NotEmpty()
+                .WithMessage("You need to enter your password.");
         }
     }
 
-    public sealed record Request(string Email, string Password, bool StoreJwtInCookie);
-
-    public sealed record Response(string Token, int LifetimeInSeconds);
-
     public static class Errors
     {
-        public static ValidationFailure InvalidLoginCredentials => new()
-        {
-            PropertyName = string.Empty,
-            ErrorCode = "InvalidLoginCredentials",
-            ErrorMessage = "Invalid email address or password."
-        };
+        public static Error InvalidLoginCredentials => new(
+            "InvalidLoginCredentials",
+            "Invalid email address or password.");
 
-        public static ValidationFailure ConfirmedEmailRequired => new()
-        {
-            PropertyName = string.Empty,
-            ErrorCode = "ConfirmedEmailRequired",
-            ErrorMessage = "You need to confirm your email address. Check your inbox for a verification message."
-        };
+        public static Error EmailConfirmationRequired => new(
+            "EmailConfirmationRequired",
+            "You need to confirm your email. Check your inbox for a confirmation message.");
     }
+
+    public sealed record Response
+    (
+        string Token,
+        int LifetimeInSeconds
+    );
 
     public sealed record EmailConfirmationRequiredMessage(User User);
 
@@ -111,7 +120,7 @@ public static class Login
         public async Task Consume(ConsumeContext<EmailConfirmationRequiredMessage> context)
         {
             logger.LogInformation("Email confirmation for user with ID '{Id}' is required before logging in.", context.Message.User.Id);
-            await emailService.SendEmailConfirmation(context.Message.User);
+            await emailService.SendEmailConfirmation(context.Message.User, context.CancellationToken);
         }
     }
 }

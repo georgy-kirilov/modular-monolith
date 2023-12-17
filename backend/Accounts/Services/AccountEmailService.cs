@@ -6,18 +6,30 @@ using HandlebarsDotNet;
 using Shared.Email;
 using Shared.Configuration;
 using Accounts.Database.Entities;
+using Accounts.Settings;
+using Accounts.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace Accounts.Services;
 
 public sealed class AccountEmailService(
+    TimeProvider timeProvider,
+    AccountSettings accountSettings,
+    ILogger<AccountEmailService> logger,
+    UserManager<User> userManager,
     IConfiguration configuration,
     FilePathResolver filePathResolver,
-    UserManager<User> userManager,
-    IEmailSender emailSender,
-    ILogger<AccountEmailService> logger)
+    AccountsDbContext db,
+    IEmailSender emailSender)
 {
-    public async Task SendEmailConfirmation(User user)
+    public async Task SendEmailConfirmation(User user, CancellationToken cancellationToken)
     {
+        if (!user.CanSendEmailConfirmation(timeProvider.GetUtcNow(), accountSettings.Email.EmailConfirmationThresholdInSeconds))
+        {
+            logger.LogInformation("Postponing email confirmation for user with ID '{Id}' as the interval since the last email is still within the threshold limit.", user.Id);
+            return;
+        }
+
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = WebUtility.UrlEncode(token);
 
@@ -31,9 +43,23 @@ public sealed class AccountEmailService(
             subject: "Confirm Your Email",
             html);
 
-        if (emailSent)
+        if (!emailSent)
         {
-            logger.LogInformation("An email confirmation has been sent to '{Email}'", user.Email);
+            logger.LogError("Failed to send email confirmation for user with ID '{Id}'.", user.Id);
+            return;
+        }
+
+        logger.LogInformation("Email confirmation has been sent to user with ID '{Id}'.", user.Email);
+
+        var updatedRowsCount = await db.Users
+            .Where(x => x.Id == user.Id)
+            .ExecuteUpdateAsync(entity => entity
+            .SetProperty(y => y.LastEmailConfirmationSentAt, timeProvider.GetUtcNow()), cancellationToken);
+
+        if (updatedRowsCount != 1)
+        {
+            logger.LogError($"Failed to update {nameof(User.LastEmailConfirmationSentAt)} for user with ID '{{Id}}'.", user.Id);
+            return;
         }
     }
 

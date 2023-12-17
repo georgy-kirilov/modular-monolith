@@ -40,7 +40,7 @@ builder.Services
 
 var application = builder.Build();
 
-await application.ApplyMigrationsInDevelopment<AccountsDbContext>();
+await application.ApplyMigrations<AccountsDbContext>();
 
 application
     .UseSwaggerInDevelopment()

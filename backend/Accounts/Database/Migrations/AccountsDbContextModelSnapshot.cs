@@ -80,6 +80,10 @@ namespace Accounts.Database.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("email_confirmed");
 
+                    b.Property<DateTimeOffset?>("LastEmailConfirmationSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_email_confirmation_sent_at");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("lockout_enabled");

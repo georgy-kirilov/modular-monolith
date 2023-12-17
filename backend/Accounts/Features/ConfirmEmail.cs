@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using FluentValidation.Results;
+using Shared.Validation;
 
 namespace Accounts.Features;
 
@@ -12,8 +13,7 @@ public static class ConfirmEmail
 {
     public sealed class Endpoint : IEndpoint
     {
-        public void Map(IEndpointRouteBuilder builder) =>
-            builder
+        public void Map(IEndpointRouteBuilder builder) => builder
             .MapPost("accounts/confirm-email", Handle)
             .AllowAnonymous()
             .WithTags("Accounts");
@@ -25,25 +25,18 @@ public static class ConfirmEmail
 
         if (user is null)
         {
-            return Results.BadRequest(new ValidationFailure[]
-            {
-                new()
-                {
-                    ErrorCode = "UserNotFound",
-                    ErrorMessage = "User was not found."
-                }
-            });
+            return new Error("UserNotFound", "User was not found.").ToValidationProblem();
         }
 
         var identityResult = await userManager.ConfirmEmailAsync(user, request.Token);
 
         if (!identityResult.Succeeded)
         {
-            return Results.BadRequest(identityResult.Errors.Select(err => new ValidationFailure
-            {
-                ErrorCode = err.Code,
-                ErrorMessage = err.Description
-            }));
+            return identityResult
+                .Errors
+                .Select(err => new Error(err.Code, err.Description))
+                .ToArray()
+                .ToValidationProblem();
         }
 
         return Results.Ok();

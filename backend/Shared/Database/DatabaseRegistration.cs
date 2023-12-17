@@ -34,7 +34,7 @@ public static class DatabaseRegistration
         return services;
     }
 
-    public static async Task ApplyMigrationsInDevelopment<TContext>(this WebApplication app)
+    public static async Task ApplyMigrations<TContext>(this WebApplication app)
         where TContext : DbContext
     {
         if (app.Environment.IsDevelopment())
