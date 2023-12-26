@@ -44,4 +44,3 @@ cd ./backend/shared/data-protection/certificates
 openssl req -x509 -newkey rsa:4096 -sha256 -days 36525 -nodes -keyout data-protection.key -out data-protection.crt -subj "/CN=local"
 openssl pkcs12 -export -out data-protection.pfx -inkey data-protection.key -in data-protection.crt
 ```
-
