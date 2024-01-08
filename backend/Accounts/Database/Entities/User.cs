@@ -6,8 +6,6 @@ public sealed class User : IdentityUser<Guid>
 {
     public DateTimeOffset? LastEmailConfirmationSentAt { get; set; }
 
-    public bool RequireEmailConfirmation(bool requireConfirmedEmail) => requireConfirmedEmail && !EmailConfirmed;
-
     public bool CanSendEmailConfirmation(DateTimeOffset now, int thresholdInSeconds)
     {
         if (LastEmailConfirmationSentAt is null)

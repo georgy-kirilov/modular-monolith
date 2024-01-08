@@ -8,6 +8,8 @@ using Shared.Logging;
 using Shared.Messaging;
 using Accounts;
 using Accounts.Database;
+using Shared;
+using Shared.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +30,10 @@ builder.Services
     .AddSwagger()
     .AddAuthentication(builder.Configuration, builder.Environment)
     .AddDataProtection(builder.Configuration)
-    .AddEmail(builder.Configuration);
+    .AddEmail(builder.Configuration)
+    .AddDateTime()
+    .AddErrors<AccountsDbContext>()
+    .AddHandlers<AccountsDbContext>();
 
 builder.Services.AddMessaging(builder.Configuration,
 [

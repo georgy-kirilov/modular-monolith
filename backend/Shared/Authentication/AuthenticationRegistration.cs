@@ -55,13 +55,13 @@ public static class AuthenticationRegistration
     {
         app.Use(async (context, next) =>
         {
-            if (!context.Request.Headers.ContainsKey(JwtConstants.Header))
+            if (!context.Request.Headers.ContainsKey(JwtAuthConstants.Header))
             {
-                var cookie = context.Request.Cookies[JwtConstants.Cookie];
+                var cookie = context.Request.Cookies[JwtAuthConstants.Cookie];
 
                 if (cookie is not null)
                 {
-                    context.Request.Headers.Append(JwtConstants.Header, $"Bearer {cookie}");
+                    context.Request.Headers.Append(JwtAuthConstants.Header, $"Bearer {cookie}");
                 }
             }
 

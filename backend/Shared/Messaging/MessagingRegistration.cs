@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MassTransit;
 using Shared.Configuration;
+using System.Text.RegularExpressions;
 
 namespace Shared.Messaging;
 
@@ -26,7 +27,7 @@ public static class MessagingRegistration
                 bus.AddConsumer(consumerType);
             }
 
-            bus.SetKebabCaseEndpointNameFormatter();
+            bus.SetEndpointNameFormatter(new CustomEndpointNameFormatter());
 
             bus.UsingRabbitMq((context, cfg) =>
             {
@@ -42,4 +43,41 @@ public static class MessagingRegistration
 
         return services;
     }
+}
+
+public partial class CustomEndpointNameFormatter : DefaultEndpointNameFormatter
+{
+    public override string SanitizeName(string name)
+    {
+        return base.SanitizeName(name).Replace("_", "-");
+    }
+
+    public override string Consumer<T>()
+    {
+        var type = typeof(T);
+        var declaringType = type.DeclaringType;
+        bool isConsumerInsideStaticClass = declaringType is not null && declaringType.IsAbstract && declaringType.IsSealed;
+
+        if (isConsumerInsideStaticClass)
+        {
+            var name = SanitizeName(declaringType!.Name);
+            return ToKebabCase(name);
+        }
+
+        return base.Consumer<T>();
+    }
+
+    private static string ToKebabCase(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
+
+        text = KebabCaseRegex().Replace(text, "-$1").ToLower();
+        return text;
+    }
+
+    [GeneratedRegex("(?<!^)([A-Z])")]
+    private static partial Regex KebabCaseRegex();
 }
