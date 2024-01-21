@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Shared.Api;
 
@@ -50,6 +51,8 @@ public static class SwaggerRegistration
                 Url = "/api",
                 Description = "Enable the redirection of requests coming from the Swagger UI through the Nginx server."
             });
+
+            options.OperationFilter<AcceptLanguageHeaderOperationFilter>();
         });
 
         return services;
@@ -69,5 +72,22 @@ public static class SwaggerRegistration
         }
 
         return app;
+    }
+}
+
+public sealed class AcceptLanguageHeaderOperationFilter : IOperationFilter
+{
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        operation.Parameters ??= new List<OpenApiParameter>();
+
+        operation.Parameters.Add(new OpenApiParameter
+        {
+            Name = "Accept-Language",
+            In = ParameterLocation.Header,
+            Required = false,
+            Description = "Language preference",
+            Schema = new OpenApiSchema { Type = "string" }
+        });
     }
 }
