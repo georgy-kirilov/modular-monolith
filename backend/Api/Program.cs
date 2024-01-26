@@ -53,8 +53,10 @@ application
     .UseAuthentication()
     .UseAuthorization();
 
-application.MapGroup("/").RequireAuthorization()
-    .MapApiEndpoints<AccountsDbContext>()
-    .MapGet("ping", () => new { Message = "Hello" }).AllowAnonymous();
+var group = application.MapGroup("/").RequireAuthorization();
+
+group.MapApiEndpoints<AccountsDbContext>();
+group.MapGet("ping", () => new { Message = "Hello" }).AllowAnonymous();
+group.MapGet("test", () => "hi").AllowAnonymous();
 
 application.Run();

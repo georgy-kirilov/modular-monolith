@@ -37,12 +37,12 @@ public sealed class Handler(
 
         if (user is null)
         {
-            return _errors.InvalidLoginCredentials.ToErrorsArray();
+            return new[] { _errors.InvalidLoginCredentials };
         }
 
         if (!await _userManager.CheckPasswordAsync(user, request.Password))
         {
-            return _errors.InvalidLoginCredentials.ToErrorsArray();
+            return new[] { _errors.InvalidLoginCredentials };
         }
 
         if (_accountSettings.SignIn.RequireConfirmedEmail && !user.EmailConfirmed)
