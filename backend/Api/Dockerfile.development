@@ -24,5 +24,10 @@ WORKDIR /src/Api
 RUN dotnet tool install --global dotnet-ef
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
+# Install debugging tool
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends unzip && \
+    curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg
+
 # Watch for changes and restart app
 ENTRYPOINT ["dotnet", "watch", "run", "--no-restore", "--no-hot-reload"]
