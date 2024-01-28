@@ -4,13 +4,15 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using OneOf;
 using MassTransit;
 using Shared;
 using Shared.Authentication;
 using Shared.Validation;
 using Accounts.Database.Entities;
 using Accounts.Settings;
-using OneOf;
+using Accounts.Database;
+using Accounts.Services;
 
 namespace Accounts.Features.Login;
 
@@ -19,6 +21,7 @@ public sealed class Handler(
     Validator _validator,
     IDateTime _dateTime,
     UserManager<User> _userManager,
+    AccountsDbContext _dbContext,
     JwtSettings _jwtSettings,
     AccountSettings _accountSettings,
     IPublishEndpoint _publishEndpoint,
@@ -30,7 +33,7 @@ public sealed class Handler(
 
         if (!validationResult.IsValid)
         {
-            return validationResult.ToErrorsArray();
+            return validationResult.GetErrors();
         }
 
         var user = await _userManager.FindByEmailAsync(request.Email);
@@ -47,8 +50,11 @@ public sealed class Handler(
 
         if (_accountSettings.SignIn.RequireConfirmedEmail && !user.EmailConfirmed)
         {
-            await _publishEndpoint.Publish(new EmailConfirmationRequired.Message(user), cancellationToken);
-            return _errors.EmailConfirmationRequired.ToErrorsArray();
+            await _publishEndpoint.Publish(new SendAccountConfirmationEmail(user.Id), cancellationToken);
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            return new[] { _errors.EmailConfirmationRequired };
         }
 
         var jwtToken = GenerateJwtToken(user);

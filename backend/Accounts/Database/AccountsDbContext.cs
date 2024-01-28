@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Accounts.Database.Entities;
+using MassTransit;
 
 namespace Accounts.Database;
 
@@ -10,18 +11,21 @@ public sealed class AccountsDbContext(DbContextOptions<AccountsDbContext> option
 {
     public const string Schema = "accounts";
 
-    protected override void OnModelCreating(ModelBuilder builder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(builder);
+        base.OnModelCreating(modelBuilder);
 
-        builder.HasDefaultSchema(Schema);
+        modelBuilder.HasDefaultSchema(Schema);
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
 
-        builder.Entity<User>().ToTable("user");
-        builder.Entity<Role>().ToTable("role");
-        builder.Entity<IdentityRoleClaim<Guid>>().ToTable("role_claim");
-        builder.Entity<IdentityUserRole<Guid>>().ToTable("user_role");
-        builder.Entity<IdentityUserClaim<Guid>>().ToTable("user_claim");
-        builder.Entity<IdentityUserLogin<Guid>>().ToTable("user_login");
-        builder.Entity<IdentityUserToken<Guid>>().ToTable("user_token");
+        modelBuilder.Entity<User>().ToTable("user");
+        modelBuilder.Entity<Role>().ToTable("role");
+        modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("role_claim");
+        modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("user_role");
+        modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("user_claim");
+        modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("user_login");
+        modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("user_token");
     }
 }

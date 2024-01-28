@@ -8,7 +8,7 @@ public static class ValidationExtensions
 {
     public static IResult ToOkResult(this object value) => Results.Ok(value);
 
-    public static Error[] ToErrorsArray(this ValidationResult validationResult) =>
+    public static Error[] GetErrors(this ValidationResult validationResult) =>
         validationResult
         .Errors
         .Select(err => new Error(err.PropertyName, err.ErrorCode, err.ErrorMessage))

@@ -1,17 +1,18 @@
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using MassTransit;
 using Shared.Configuration;
-using System.Text.RegularExpressions;
 
 namespace Shared.Messaging;
 
 public static class MessagingRegistration
 {
-    public static IServiceCollection AddMessaging(this IServiceCollection services,
+    public static IServiceCollection AddMessaging<TContext>(this IServiceCollection services,
         IConfiguration configuration,
         Assembly[] consumerAssemblies)
+        where TContext : DbContext
     {
         var username = configuration.GetValueOrThrow<string>("RABBITMQ_USER");
         var password = configuration.GetValueOrThrow<string>("RABBITMQ_PASSWORD");
@@ -22,12 +23,25 @@ public static class MessagingRegistration
 
         services.AddMassTransit(bus =>
         {
+            bus.SetKebabCaseEndpointNameFormatter();
+
+            bus.AddEntityFrameworkOutbox<TContext>(o =>
+            {
+                o.QueryDelay = TimeSpan.FromSeconds(5);
+                o.DuplicateDetectionWindow = TimeSpan.FromSeconds(30);
+                o.UsePostgres();
+                o.UseBusOutbox();
+            });
+
             foreach (var consumerType in consumerTypes)
             {
                 bus.AddConsumer(consumerType);
             }
 
-            bus.SetEndpointNameFormatter(new CustomEndpointNameFormatter());
+            bus.AddConfigureEndpointsCallback((context, name, cfg) =>
+            {
+                cfg.UseEntityFrameworkOutbox<TContext>(context);
+            });
 
             bus.UsingRabbitMq((context, cfg) =>
             {
@@ -37,47 +51,11 @@ public static class MessagingRegistration
                     h.Password(password);
                 });
 
+                cfg.AutoStart = true;
                 cfg.ConfigureEndpoints(context);
             });
         });
 
         return services;
     }
-}
-
-public partial class CustomEndpointNameFormatter : DefaultEndpointNameFormatter
-{
-    public override string SanitizeName(string name)
-    {
-        return base.SanitizeName(name).Replace("_", "-");
-    }
-
-    public override string Consumer<T>()
-    {
-        var type = typeof(T);
-        var declaringType = type.DeclaringType;
-        bool isConsumerInsideStaticClass = declaringType is not null && declaringType.IsAbstract && declaringType.IsSealed;
-
-        if (isConsumerInsideStaticClass)
-        {
-            var name = SanitizeName(declaringType!.Name);
-            return ToKebabCase(name);
-        }
-
-        return base.Consumer<T>();
-    }
-
-    private static string ToKebabCase(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return string.Empty;
-        }
-
-        text = KebabCaseRegex().Replace(text, "-$1").ToLower();
-        return text;
-    }
-
-    [GeneratedRegex("(?<!^)([A-Z])")]
-    private static partial Regex KebabCaseRegex();
 }

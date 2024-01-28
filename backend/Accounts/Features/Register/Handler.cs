@@ -1,8 +1,10 @@
-using Accounts.Database.Entities;
-using Accounts.Settings;
-using MassTransit;
 using Microsoft.AspNetCore.Identity;
+using Accounts.Database;
+using Accounts.Database.Entities;
+using Accounts.Services;
+using Accounts.Settings;
 using OneOf;
+using MassTransit;
 using Shared.Validation;
 
 namespace Accounts.Features.Register;
@@ -11,6 +13,7 @@ public sealed class Handler(
     Validator _validator,
     UserManager<User> _userManager,
     IPublishEndpoint _publishEndpoint,
+    AccountsDbContext _dbContext,
     AccountSettings _accountSettings) : IHandler<Request, OneOf<Response, Error[]>>
 {
     public async Task<OneOf<Response, Error[]>> Handle(Request request, CancellationToken cancellationToken)
@@ -19,7 +22,7 @@ public sealed class Handler(
 
         if (!validationResult.IsValid)
         {
-            return validationResult.ToErrorsArray();
+            return validationResult.GetErrors();
         }
 
         var user = new User
@@ -28,17 +31,20 @@ public sealed class Handler(
             Email = request.Email
         };
 
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         var identityResult = await _userManager.CreateAsync(user, request.Password);
 
         if (!identityResult.Succeeded)
         {
-            return identityResult
-                .Errors
-                .Select(err => new Error(err.Code, err.Description))
-                .ToArray();
+            return identityResult.Errors.Select(err => new Error(err.Code, err.Description)).ToArray();
         }
 
-        await _publishEndpoint.Publish(new UserAccountCreated.Message(user), cancellationToken);
+        await _publishEndpoint.Publish(new SendAccountConfirmationEmail(user.Id), cancellationToken);
+        
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
 
         return new Response(_accountSettings.Email.EmailConfirmationThresholdInSeconds);
     }
