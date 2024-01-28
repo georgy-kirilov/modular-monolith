@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
@@ -9,46 +8,27 @@ namespace Shared.Messaging;
 
 public static class MessagingRegistration
 {
-    public static IServiceCollection AddMessaging<TContext>(this IServiceCollection services,
+    public static IServiceCollection AddMessaging(this IServiceCollection services,
         IConfiguration configuration,
-        Assembly[] consumerAssemblies)
-        where TContext : DbContext
+        Action<MessagingOptions> configureMessaging)
     {
         var username = configuration.GetValueOrThrow<string>("RABBITMQ_USER");
         var password = configuration.GetValueOrThrow<string>("RABBITMQ_PASSWORD");
 
-        var consumerTypes = consumerAssemblies
-            .SelectMany(a => a.GetTypes())
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IConsumer).IsAssignableFrom(t));
-
-        services.AddMassTransit(bus =>
+        services.AddMassTransit(busConfig =>
         {
-            bus.SetKebabCaseEndpointNameFormatter();
+            var messagingOptions = new MessagingOptions(busConfig);
 
-            bus.AddEntityFrameworkOutbox<TContext>(o =>
-            {
-                o.QueryDelay = TimeSpan.FromSeconds(5);
-                o.DuplicateDetectionWindow = TimeSpan.FromSeconds(30);
-                o.UsePostgres();
-                o.UseBusOutbox();
-            });
+            configureMessaging(messagingOptions);
 
-            foreach (var consumerType in consumerTypes)
-            {
-                bus.AddConsumer(consumerType);
-            }
+            busConfig.SetKebabCaseEndpointNameFormatter();
 
-            bus.AddConfigureEndpointsCallback((context, name, cfg) =>
+            busConfig.UsingRabbitMq((context, cfg) =>
             {
-                cfg.UseEntityFrameworkOutbox<TContext>(context);
-            });
-
-            bus.UsingRabbitMq((context, cfg) =>
-            {
-                cfg.Host("rabbitmq", "/", h =>
+                cfg.Host(host: "rabbitmq", virtualHost: "/", configHost =>
                 {
-                    h.Username(username);
-                    h.Password(password);
+                    configHost.Username(username);
+                    configHost.Password(password);
                 });
 
                 cfg.AutoStart = true;

@@ -35,10 +35,8 @@ builder.Services
     .AddErrors<AccountsDbContext>()
     .AddHandlers<AccountsDbContext>();
 
-builder.Services.AddMessaging<AccountsDbContext>(builder.Configuration,
-[
-    typeof(AccountsDbContext).Assembly
-]);
+builder.Services.AddMessaging(builder.Configuration, options =>
+    options.AddConsumersFromAssemblyContaining<AccountsDbContext>());
 
 builder.Services
     .AddAccountsModule(builder.Configuration);
