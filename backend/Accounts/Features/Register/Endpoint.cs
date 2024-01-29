@@ -21,6 +21,6 @@ public sealed class Endpoint : IEndpoint
         .AllowAnonymous()
         .Produces<Response>()
         .ProducesValidationProblem()
-        .WithTags("Accounts");
+        .WithTags(nameof(Accounts));
     }
 }

@@ -1,24 +1,22 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using OneOf.Types;
 using Shared.Api;
 using Shared.Validation;
 
-namespace Accounts.Features.Login;
+namespace Accounts.Features.GetMineUserInfo;
 
 public sealed class Endpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("accounts/login", async (
-            Request request,
-            Handler handler,
-            CancellationToken cancellationToken) =>
+        builder.MapGet("accounts/me/info", async (Handler handler, CancellationToken cancellationToken) =>
         {
-            var result = await handler.Handle(request, cancellationToken);
+            var result = await handler.Handle(new None(), cancellationToken);
             return result.Match(res => res.ToOkResult(), err => err.ToValidationProblem());
         })
-        .AllowAnonymous()
+        .RequireAuthorization()
         .Produces<Response>()
         .ProducesValidationProblem()
         .WithTags(nameof(Accounts));

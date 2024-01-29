@@ -35,10 +35,8 @@ builder.Services
     .AddErrors<AccountsDbContext>()
     .AddHandlers<AccountsDbContext>();
 
-builder.Services.AddMessaging(builder.Configuration,
-[
-    typeof(AccountsDbContext).Assembly
-]);
+builder.Services.AddMessaging(builder.Configuration, options =>
+    options.AddConsumersFromAssemblyContaining<AccountsDbContext>());
 
 builder.Services
     .AddAccountsModule(builder.Configuration);
@@ -57,6 +55,5 @@ var group = application.MapGroup("/").RequireAuthorization();
 
 group.MapApiEndpoints<AccountsDbContext>();
 group.MapGet("ping", () => new { Message = "Hello" }).AllowAnonymous();
-group.MapGet("test", () => "hi").AllowAnonymous();
 
 application.Run();

@@ -19,7 +19,7 @@ public static class ModuleRegistration
         services
             .AddDatabase<AccountsDbContext>(configuration, AccountsDbContext.Schema)
             .AddValidatorsFromAssemblyContaining<AccountsDbContext>()
-            .AddTransient<AccountEmailService>();
+            .AddScoped<EmailTemplateRenderer>();
 
         var accountSettings = configuration.GetValueOrThrow<AccountSettings>(AccountSettings.Section);
 

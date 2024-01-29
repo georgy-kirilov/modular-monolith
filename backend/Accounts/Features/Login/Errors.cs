@@ -2,13 +2,13 @@ using Shared.Validation;
 
 namespace Accounts.Features.Login;
 
-public sealed class ErrorsRegistration : IErrorsRegistration
+public sealed class LocalizedErrors : ILocalizedResource
 {
-    public Translations Create() => new()
+    public Localization Create() => new()
     {
         BaseType = typeof(IErrors),
-        English = new English(),
-        Bulgarian = new Bulgarian()
+        English = new EnglishErrors(),
+        Bulgarian = new BulgarianErrors()
     };
 }
 
@@ -23,7 +23,7 @@ public interface IErrors
     Error PasswordRequired { get; }
 }
 
-public sealed class English : IErrors
+public sealed class EnglishErrors : IErrors
 {
     public Error InvalidLoginCredentials => "Invalid email address or password.";
 
@@ -34,7 +34,7 @@ public sealed class English : IErrors
     public Error PasswordRequired => "You need to enter your password.";
 }
 
-public sealed class Bulgarian : IErrors
+public sealed class BulgarianErrors : IErrors
 {
     public Error InvalidLoginCredentials => "Невалиден имейл адрес или парола.";
 

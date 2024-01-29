@@ -2,9 +2,9 @@ using Shared.Validation;
 
 namespace Accounts.Features.Register;
 
-public sealed class ErrorsRegistration : IErrorsRegistration
+public sealed class ErrorsRegistration : ILocalizedResource
 {
-    public Translations Create() => new()
+    public Localization Create() => new()
     {
         BaseType = typeof(IErrors),
         English = new English(),

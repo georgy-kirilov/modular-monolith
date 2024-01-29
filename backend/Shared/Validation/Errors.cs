@@ -14,7 +14,7 @@ public sealed record Error(string Field, string Code, string Message)
     public static implicit operator Error(string message) => new(message);
 }
 
-public sealed class Translations
+public sealed class Localization
 {
     public required Type BaseType { get; init; }
 
@@ -23,9 +23,9 @@ public sealed class Translations
     public required object Bulgarian { get; init; }
 }
 
-public interface IErrorsRegistration
+public interface ILocalizedResource
 {
-    Translations Create();
+    Localization Create();
 }
 
 public static class ErrorsServiceRegistration
@@ -37,13 +37,13 @@ public static class ErrorsServiceRegistration
         var types = typeof(TProgram).Assembly
             .GetTypes()
             .Where(t =>
-                typeof(IErrorsRegistration).IsAssignableFrom(t)
+                typeof(ILocalizedResource).IsAssignableFrom(t)
                 && !t.IsInterface
                 && !t.IsAbstract);
 
         foreach (var type in types)
         {
-            var instance = Activator.CreateInstance(type) as IErrorsRegistration ?? throw new ArgumentException();
+            var instance = Activator.CreateInstance(type) as ILocalizedResource ?? throw new ArgumentException();
             var translations = instance.Create();
             
             services.AddTransient(translations.BaseType, serviceProvider =>
