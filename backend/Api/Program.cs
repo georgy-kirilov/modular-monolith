@@ -33,6 +33,7 @@ builder.Services
     .AddEmail(builder.Configuration)
     .AddDateTime()
     .AddErrors<AccountsDbContext>()
+    .AddApiEndpointsForAssemblyContaining<AccountsDbContext>()
     .AddHandlers<AccountsDbContext>();
 
 builder.Services.AddMessaging(builder.Configuration, options =>
@@ -53,7 +54,6 @@ application
 
 var group = application.MapGroup("/").RequireAuthorization();
 
-group.MapApiEndpoints<AccountsDbContext>();
-group.MapGet("ping", () => new { Message = "Hello" }).AllowAnonymous();
+application.MapApiEndpointsForAssemblyContaining<AccountsDbContext>(group);
 
 application.Run();
