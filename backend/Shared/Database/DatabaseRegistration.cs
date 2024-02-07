@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,6 +9,8 @@ namespace Shared.Database;
 
 public static class DatabaseRegistration
 {
+    public const string MigrationsHistoryTableName = "__ef_migrations_history";
+
     public static IServiceCollection AddDatabase<TContext>(this IServiceCollection services,
         IConfiguration configuration,
         string schema)
@@ -25,7 +26,7 @@ public static class DatabaseRegistration
             dbContextOptions.UseNpgsql(connection, npgsqlOptions =>
             {
                 npgsqlOptions
-                    .MigrationsHistoryTable(HistoryRepository.DefaultTableName, schema)
+                    .MigrationsHistoryTable(MigrationsHistoryTableName, schema)
                     .MigrationsAssembly(typeof(TContext).Assembly.FullName);
             })
             .UseSnakeCaseNamingConvention();
