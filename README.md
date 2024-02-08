@@ -1,5 +1,9 @@
 ## Template
 
+### Setup Development Environment
+
+- You need to have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed, up and running.
+
 ### Running in Development Environment
 ```powershell
 git clone https://github.com/georgy-kirilov/modular-monolith.git
