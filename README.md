@@ -1,5 +1,13 @@
 ## Template
 
+### Running in Development Environment
+```powershell
+git clone https://github.com/georgy-kirilov/modular-monolith.git
+cd ./modular-monolith/
+cp example.env .env
+docker-compose up --build
+```
+
 ### Installation
 ```powershell
 dotnet new uninstall
