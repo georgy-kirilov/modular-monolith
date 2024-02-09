@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
 using Shared.Configuration;
 using Shared.Database;
+using Shared.Validation;
+using Shared.Api;
 using Accounts.Database;
 using Accounts.Database.Entities;
 using Accounts.Services;
@@ -18,6 +20,9 @@ public static class ModuleRegistration
     {
         services
             .AddDatabase<AccountsDbContext>(configuration, AccountsDbContext.Schema)
+            .AddErrorsFromAssemblyContaining<AccountsDbContext>()
+            .AddApiEndpointsFromAssemblyContaining<AccountsDbContext>()
+            .AddHandlersFromAssemblyContaining<AccountsDbContext>()
             .AddValidatorsFromAssemblyContaining<AccountsDbContext>()
             .AddScoped<EmailTemplateRenderer>();
 

@@ -19,7 +19,7 @@ namespace Accounts.Features.Login;
 public sealed class Handler(
     IErrors _errors,
     Validator _validator,
-    IDateTime _dateTime,
+    TimeProvider _timeProvider,
     UserManager<User> _userManager,
     AccountsDbContext _dbContext,
     JwtSettings _jwtSettings,
@@ -94,7 +94,7 @@ public sealed class Handler(
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict,
-            Expires = _dateTime.UtcNow.AddSeconds(_jwtSettings.LifetimeInSeconds)
+            Expires = _timeProvider.GetUtcNow().AddSeconds(_jwtSettings.LifetimeInSeconds)
         };
 
         _httpContextAccessor?.HttpContext?.Response.Cookies.Append(

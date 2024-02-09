@@ -18,6 +18,9 @@ services:
     build:
       dockerfile: Api/Dockerfile.development
     restart: on-failure
+    environment:
+      - DEBUG_MODE
+      - DEBUG_MODE_ATTACH_PROCESS_WAITING_PERIOD_SECONDS=60
     volumes:
       - ./docker-dev-volumes/backend/shared/data-protection/certificates:/app/certificates:ro
       # Enable hot reloading

@@ -7,7 +7,14 @@ public sealed class MessagingOptions(IBusRegistrationConfigurator _bus)
 {
     public void AddConsumersFromAssemblyContaining<TContext>() where TContext : DbContext, IOutboxStore
     {
-        _bus.AddConsumersFromNamespaceContaining<TContext>();
+        var consumerTypes = typeof(TContext).Assembly
+            .GetTypes()
+            .Where(t => typeof(IConsumer).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+
+        foreach (var consumerType in consumerTypes)
+        {
+            _bus.AddConsumer(consumerType);
+        }
 
         _bus.AddEntityFrameworkOutbox<TContext>(o =>
         {

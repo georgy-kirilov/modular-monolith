@@ -1,3 +1,5 @@
+using Accounts;
+using Accounts.Database;
 using Shared.Api;
 using Shared.Authentication;
 using Shared.Configuration;
@@ -6,21 +8,15 @@ using Shared.DataProtection;
 using Shared.Email;
 using Shared.Logging;
 using Shared.Messaging;
-using Accounts;
-using Accounts.Database;
-using Shared;
-using Shared.Validation;
+using Shared.Debugging;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args).EnableDevelopmentDebugging();
 
 builder.Host.UseLogging(builder.Environment);
 
 builder.Configuration.Sources.Clear();
-
 builder.Configuration
-    .AddAppSettings<AccountsDbContext>(builder.Environment);
-
-builder.Configuration
+    .AddAppSettings<AccountsDbContext>(builder.Environment)
     .AddEnvironmentVariables()
     .Build();
 
@@ -31,29 +27,26 @@ builder.Services
     .AddAuthentication(builder.Configuration, builder.Environment)
     .AddDataProtection(builder.Configuration)
     .AddEmail(builder.Configuration)
-    .AddDateTime()
-    .AddErrors<AccountsDbContext>()
-    .AddApiEndpointsForAssemblyContaining<AccountsDbContext>()
-    .AddHandlers<AccountsDbContext>();
-
-builder.Services.AddMessaging(builder.Configuration, options =>
-    options.AddConsumersFromAssemblyContaining<AccountsDbContext>());
+    .AddSingleton(TimeProvider.System)
+    .AddMessaging(builder.Configuration, x =>
+    {
+        x.AddConsumersFromAssemblyContaining<AccountsDbContext>();
+    });
 
 builder.Services
     .AddAccountsModule(builder.Configuration);
 
-var application = builder.Build();
+var app = builder.Build();
 
-await application.ApplyMigrations<AccountsDbContext>();
+await app.ApplyMigrations<AccountsDbContext>();
 
-application
-    .UseSwaggerInDevelopment()
-    .UseJwtFromInsideCookie()
-    .UseAuthentication()
-    .UseAuthorization();
+app.UseDevelopmentSwaggerUI();
+app.UseJwtFromInsideCookie();
+app.UseAuthentication();
+app.UseAuthorization();
 
-var group = application.MapGroup("/").RequireAuthorization();
+var apiGroup = app.MapGroup("/").RequireAuthorization();
 
-application.MapApiEndpointsForAssemblyContaining<AccountsDbContext>(group);
+apiGroup.MapApiEndpointsForAssemblyContaining<AccountsDbContext>(app);
 
-application.Run();
+app.Run();

@@ -8,7 +8,7 @@ namespace Shared.Api;
 
 public static class EndpointRegistration
 {
-    public static IServiceCollection AddApiEndpointsForAssemblyContaining<T>(this IServiceCollection services)
+    public static IServiceCollection AddApiEndpointsFromAssemblyContaining<T>(this IServiceCollection services)
     {
         var endpointTypes = typeof(T).Assembly
             .GetTypes()
@@ -25,8 +25,8 @@ public static class EndpointRegistration
         return services;
     }
 
-    public static IEndpointRouteBuilder MapApiEndpointsForAssemblyContaining<TProgram>(this WebApplication application,
-        IEndpointRouteBuilder baseEndpointRouteBuilder)
+    public static IEndpointRouteBuilder MapApiEndpointsForAssemblyContaining<TProgram>(this IEndpointRouteBuilder baseEndpointRouteBuilder,
+        WebApplication app)
     {
         var endpointTypes = typeof(TProgram).Assembly
             .GetTypes()
@@ -35,7 +35,7 @@ public static class EndpointRegistration
                 && !t.IsInterface
                 && !t.IsAbstract);
 
-        using var scope = application.Services.CreateScope();
+        using var scope = app.Services.CreateScope();
 
         foreach (var type in endpointTypes)
         {

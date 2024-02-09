@@ -4,7 +4,7 @@ namespace Shared.Validation;
 
 public static class Extensions
 {
-    public static IServiceCollection AddHandlers<TProgram>(this IServiceCollection services)
+    public static IServiceCollection AddHandlersFromAssemblyContaining<TProgram>(this IServiceCollection services)
     {
         var handlerOpenGenericType = typeof(IHandler<,>);
 

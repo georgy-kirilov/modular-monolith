@@ -1,20 +1,20 @@
 services:
   nginx:
-    container_name: modmontemplate-nginx
     image: nginx:1.25.3
+    container_name: modmontemplate-nginx
+    restart: unless-stopped
     ports:
       - "49152:80"
       - "49153:443"
-    volumes:
-      - ${VOLUMES_PATH}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ${VOLUMES_PATH}/nginx/ssl/ssl.crt:/etc/nginx/ssl/ssl.crt:ro
-      - ${VOLUMES_PATH}/nginx/ssl/ssl.key:/etc/nginx/ssl/ssl.key:ro
     depends_on:
       client:
         condition: service_started
       api:
         condition: service_started
-    restart: unless-stopped
+    volumes:
+      - ${VOLUMES_PATH}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${VOLUMES_PATH}/nginx/ssl/ssl.crt:/etc/nginx/ssl/ssl.crt:ro
+      - ${VOLUMES_PATH}/nginx/ssl/ssl.key:/etc/nginx/ssl/ssl.key:ro
     healthcheck:
       test: ["CMD-SHELL", "nginx -t || exit 1"]
       interval: 10s
@@ -23,23 +23,31 @@ services:
       start_period: 10s
 
   client:
-    container_name: modmontemplate-client
     image: modmontemplate-client:latest
+    container_name: modmontemplate-client
     build:
       context: ./frontend/client
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "49154:80"
-    restart: unless-stopped
 
   api:
-    container_name: modmontemplate-api
     image: modmontemplate-api:latest
+    container_name: modmontemplate-api
     build:
       context: ./backend
       dockerfile: Api/Dockerfile
+    restart: unless-stopped
     ports:
       - "49155:80"
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      seq:
+        condition: service_started
     environment:
       - JWT_KEY
       - DATA_PROTECTION_CERTIFICATE_PASSWORD
@@ -54,18 +62,11 @@ services:
     volumes:
       - ${VOLUMES_PATH}/backend/shared/data-protection/keys:/root/.aspnet/DataProtection-Keys
       - ${VOLUMES_PATH}/backend/shared/data-protection/certificates:/app/certificates
-    depends_on:
-      db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      seq:
-        condition: service_started
-    restart: unless-stopped
 
   db:
-    container_name: modmontemplate-db
     image: postgres:16.1
+    container_name: modmontemplate-db
+    restart: unless-stopped
     ports:
       - "49156:5432"
     environment:
@@ -74,7 +75,6 @@ services:
       - POSTGRES_DB=${DB_NAME}
     volumes:
       - ${VOLUMES_PATH}/db:/var/lib/postgresql/data
-    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} || exit 1"]
       interval: 10s
@@ -83,18 +83,18 @@ services:
       start_period: 10s
 
   pgadmin:
+    image: dpage/pgadmin4:8.3
     container_name: modmontemplate-pgadmin
-    image: dpage/pgadmin4:8.2
+    restart: unless-stopped
     ports:
       - "49157:80"
+    depends_on:
+      - db
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     volumes:
       - ${VOLUMES_PATH}/pgadmin:/var/lib/pgadmin
-    depends_on:
-      - db
-    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
       interval: 10s
@@ -103,8 +103,9 @@ services:
       start_period: 20s
 
   rabbitmq:
-    container_name: modmontemplate-rabbitmq
     image: rabbitmq:3.12.12-management
+    container_name: modmontemplate-rabbitmq
+    restart: unless-stopped
     ports:
       - "49158:5672"
       - "49159:15672"
@@ -114,7 +115,6 @@ services:
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management listener [{port,15672}]
     volumes:
       - ${VOLUMES_PATH}/rabbitmq:/var/lib/rabbitmq
-    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running"]
       interval: 10s
@@ -123,8 +123,9 @@ services:
       start_period: 20s
 
   seq:
-    container_name: modmontemplate-seq
     image: datalust/seq:2024.1
+    container_name: modmontemplate-seq
+    restart: unless-stopped
     ports:
       - "49160:5341"
       - "49161:80"
@@ -134,4 +135,3 @@ services:
       - SEQ_FIRSTRUN_ADMINPASSWORDHASH=${SEQ_PASSWORD_HASH}
     volumes:
       - ${VOLUMES_PATH}/seq:/data
-    restart: unless-stopped

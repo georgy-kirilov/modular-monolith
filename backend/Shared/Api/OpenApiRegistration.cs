@@ -58,7 +58,7 @@ public static class SwaggerRegistration
         return services;
     }
 
-    public static WebApplication UseSwaggerInDevelopment(this WebApplication app)
+    public static WebApplication UseDevelopmentSwaggerUI(this WebApplication app)
     {
         if (app.Environment.IsDevelopment())
         {

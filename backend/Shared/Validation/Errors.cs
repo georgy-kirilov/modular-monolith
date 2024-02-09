@@ -30,7 +30,7 @@ public interface ILocalizedResource
 
 public static class ErrorsServiceRegistration
 {
-    public static IServiceCollection AddErrors<TProgram>(this IServiceCollection services)
+    public static IServiceCollection AddErrorsFromAssemblyContaining<TProgram>(this IServiceCollection services)
     {
         services.AddHttpContextAccessor();
 
