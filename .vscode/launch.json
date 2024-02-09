@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "dotnet docker attach",
+            "name": "ModMonTemplate",
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:pickRemoteProcess}",
