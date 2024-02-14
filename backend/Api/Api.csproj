@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
-    <ProjectReference Include="..\Accounts\Accounts.csproj" />
+    <ProjectReference Include="..\Accounts\Accounts\Accounts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

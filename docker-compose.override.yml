@@ -22,13 +22,20 @@ services:
       - DEBUG_MODE
       - DEBUG_MODE_ATTACH_PROCESS_WAITING_PERIOD_SECONDS=60
     volumes:
+      # Use development data protection certificates
       - ./docker-dev-volumes/backend/shared/data-protection/certificates:/app/certificates:ro
-      # Enable hot reloading
+      # Enable dotnet file watch and hot reloading
       - ./backend:/src:delegated
-      # Improve image build speed
+      # API
       - /src/Api/obj
       - /src/Api/bin
+      # Shared
       - /src/Shared/obj
       - /src/Shared/bin
-      - /src/Accounts/obj
-      - /src/Accounts/bin
+      # Accounts
+      - /src/Accounts/Accounts/obj
+      - /src/Accounts/Accounts/bin
+      - /src/Accounts/Accounts.Contracts/obj
+      - /src/Accounts/Accounts.Contracts/bin
+      - /src/Accounts/Accounts.Tests/obj
+      - /src/Accounts/Accounts.Tests/bin

@@ -31,14 +31,14 @@ public static class ConfigurationExtensions
         var projectName = typeof(T).Assembly.GetName().Name;
 
         var appsettingsPath = environment.IsDevelopment() ?
-            $"/src/{projectName}/appsettings.json" :
-            $"./{projectName}/appsettings.json";
+            $"/src/{projectName}/{projectName}/appsettings.json" :
+            $"./{projectName}/{projectName}/appsettings.json";
 
         configuration.AddJsonFile(appsettingsPath, optional: false, reloadOnChange: false);
 
         if (environment.IsDevelopment())
         {
-            configuration.AddJsonFile($"/src/{projectName}/appsettings.Development.json",
+            configuration.AddJsonFile($"/src/{projectName}/{projectName}/appsettings.Development.json",
                 optional: false,
                 reloadOnChange: false);
         }

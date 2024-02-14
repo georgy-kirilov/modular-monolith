@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Shared\Shared.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.csproj" />
+    <ProjectReference Include="..\Accounts.Contracts\Accounts.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,14 +19,14 @@
   <ItemGroup>
     <Content Include="appsettings*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>Accounts/%(Filename)%(Extension)</Link>
+      <Link>Accounts/Accounts/%(Filename)%(Extension)</Link>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Resources/**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>Accounts/Resources/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Link>Accounts/Accounts/Resources/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
   </ItemGroup>
 
