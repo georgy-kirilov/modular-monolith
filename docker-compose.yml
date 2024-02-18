@@ -60,8 +60,8 @@ services:
       - RABBITMQ_USER
       - RABBITMQ_PASSWORD
     volumes:
-      - ${VOLUMES_PATH}/backend/shared/data-protection/keys:/root/.aspnet/DataProtection-Keys
-      - ${VOLUMES_PATH}/backend/shared/data-protection/certificates:/app/certificates
+      - ${VOLUMES_PATH}/backend/shared/data-protection:/root/.aspnet/DataProtection-Keys
+      - ${VOLUMES_PATH}/backend/shared/data-protection:/app/certificates
 
   db:
     image: postgres:16.1

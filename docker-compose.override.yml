@@ -23,7 +23,7 @@ services:
       - DEBUG_MODE_ATTACH_PROCESS_WAITING_PERIOD_SECONDS=60
     volumes:
       # Use development data protection certificates
-      - ./docker-dev-volumes/backend/shared/data-protection/certificates:/app/certificates:ro
+      - ./docker-dev-volumes/backend/shared/data-protection:/app/certificates:ro
       # Enable dotnet file watch and hot reloading
       - ./backend:/src:delegated
       # API
