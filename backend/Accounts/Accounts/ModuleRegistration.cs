@@ -10,6 +10,7 @@ using Accounts.Database;
 using Accounts.Database.Entities;
 using Accounts.Services;
 using Accounts.Settings;
+using Accounts.Features.Login;
 
 namespace Accounts;
 
@@ -24,7 +25,8 @@ public static class ModuleRegistration
             .AddApiEndpointsFromAssemblyContaining<AccountsDbContext>()
             .AddHandlersFromAssemblyContaining<AccountsDbContext>()
             .AddValidatorsFromAssemblyContaining<AccountsDbContext>()
-            .AddScoped<EmailTemplateRenderer>();
+            .AddScoped<EmailTemplateRenderer>()
+            .AddJwtPrivateKey(configuration);
 
         var accountSettings = configuration.GetValueOrThrow<AccountSettings>(AccountSettings.Section);
 

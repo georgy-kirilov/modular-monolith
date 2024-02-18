@@ -1,4 +1,3 @@
-using System.Text;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Http;
@@ -6,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using OneOf;
 using MassTransit;
-using Shared;
 using Shared.Authentication;
 using Shared.Validation;
 using Accounts.Database.Entities;
@@ -23,6 +21,7 @@ public sealed class Handler(
     UserManager<User> _userManager,
     AccountsDbContext _dbContext,
     JwtSettings _jwtSettings,
+    JwtPrivateKey _jwtPrivateKey,
     AccountSettings _accountSettings,
     IPublishEndpoint _publishEndpoint,
     IHttpContextAccessor _httpContextAccessor) : IHandler<Request, OneOf<Response, Error[]>>
@@ -69,22 +68,26 @@ public sealed class Handler(
 
     public string GenerateJwtToken(User user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
+        var signingCredentials = new SigningCredentials(new RsaSecurityKey(_jwtPrivateKey.Value), SecurityAlgorithms.RsaSha256);
 
-        var securityToken = new JwtSecurityToken
-        (
-            _jwtSettings.Issuer,
-            _jwtSettings.Audience,
-            expires: DateTime.UtcNow.AddSeconds(_jwtSettings.LifetimeInSeconds),
-            signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256),
-            claims:
-            [
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Issuer = _jwtSettings.Issuer,
+            Audience = _jwtSettings.Audience,
+            Expires = DateTime.UtcNow.AddSeconds(_jwtSettings.LifetimeInSeconds),
+            SigningCredentials = signingCredentials,
+            Subject = new ClaimsIdentity(new Claim[]
+            {
                 new(ClaimTypes.Name, user.UserName!),
                 new(ClaimTypes.NameIdentifier, user.Id.ToString())
-            ]
-        );
+            }),
+        };
 
-        return new JwtSecurityTokenHandler().WriteToken(securityToken);
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        var token = new JwtSecurityTokenHandler().CreateToken(tokenDescriptor);
+
+        return tokenHandler.WriteToken(token);
     }
 
     public void AppendJwtAuthCookie(string jwtToken)

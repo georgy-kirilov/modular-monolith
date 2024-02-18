@@ -12,7 +12,7 @@ using Shared.Debugging;
 
 var builder = WebApplication.CreateBuilder(args).EnableDevelopmentDebugging();
 
-builder.Host.UseLogging(builder.Environment);
+builder.Host.UseLogging(builder.Environment, builder.Configuration);
 
 builder.Configuration.Sources.Clear();
 builder.Configuration
@@ -24,7 +24,7 @@ builder.Services
     .AddConfiguration()
     .AddLogging()
     .AddSwagger()
-    .AddAuthentication(builder.Configuration, builder.Environment)
+    .AddAuthentication(builder.Environment)
     .AddDataProtection(builder.Configuration)
     .AddEmail(builder.Configuration)
     .AddSingleton(TimeProvider.System)

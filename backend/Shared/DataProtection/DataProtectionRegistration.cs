@@ -12,7 +12,7 @@ public static class DataProtectionRegistration
     {        
         var certificate = new X509Certificate2
         (
-            fileName: "/app/certificates/dpapi-certificate.pfx",
+            fileName: "/app/shared/data-protection/certificate.pfx",
             password: configuration.GetValueOrThrow<string>("DATA_PROTECTION_CERTIFICATE_PASSWORD"),
             X509KeyStorageFlags.EphemeralKeySet
         );

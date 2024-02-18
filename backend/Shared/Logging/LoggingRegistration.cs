@@ -1,15 +1,17 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
+using Shared.Configuration;
 
 namespace Shared.Logging;
 
 public static class LoggingRegistration
 {
-    public static void UseLogging(this IHostBuilder hostBuilder, IHostEnvironment environment)
+    public static void UseLogging(this IHostBuilder hostBuilder, IHostEnvironment environment, IConfiguration configuration)
     {
-        const string seqHost = "http://seq";
+        var seqHost = configuration.GetValueOrThrow<string>("SEQ_HOST");
 
         if (environment.IsDevelopment())
         {
