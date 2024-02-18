@@ -1,4 +1,4 @@
-using System.Text;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -6,25 +6,24 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using Shared.Configuration;
 
 namespace Shared.Authentication;
 
 public static class AuthenticationRegistration
 {
     public static IServiceCollection AddAuthentication(this IServiceCollection services,
-        IConfiguration configuration,
         IHostEnvironment environment)
     {
         var jwtSettings = new JwtSettings
         {
-            Key = configuration.GetValueOrThrow<string>("JWT_KEY"),
             Issuer = GlobalConstants.ApplicationName,
             Audience = GlobalConstants.ApplicationName,
             LifetimeInSeconds = environment.IsDevelopment() ? (12 * 3600) : (1 * 3600)
         };
 
         services.AddSingleton(jwtSettings);
+
+        var publicKey = new X509Certificate2("/app/shared/authentication/jwt-public-key.crt").GetRSAPublicKey();
 
         services.AddAuthentication(x =>
         {
@@ -42,7 +41,8 @@ public static class AuthenticationRegistration
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtSettings.Issuer,
                 ValidAudience = jwtSettings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+                IssuerSigningKey = new RsaSecurityKey(publicKey),
+                ClockSkew = TimeSpan.Zero
             };
         });
 

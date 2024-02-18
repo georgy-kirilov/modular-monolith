@@ -49,19 +49,32 @@ services:
       seq:
         condition: service_started
     environment:
-      - JWT_KEY
-      - DATA_PROTECTION_CERTIFICATE_PASSWORD
-      - APP_BASE_ADDRESS
-      - EMAIL_API_KEY
-      - EMAIL_FROM_ADDRESS
+      ### Shared ###
+      # Database
       - DB_USER
       - DB_PASSWORD
       - DB_NAME
+      # Data Protection
+      - DATA_PROTECTION_CERTIFICATE_PASSWORD
+      # Email
+      - EMAIL_API_KEY
+      - EMAIL_FROM_ADDRESS
+      # Logging
+      - SEQ_HOST
+      # Messaging
       - RABBITMQ_USER
       - RABBITMQ_PASSWORD
+      - APP_BASE_ADDRESS
+      ### Accounts ###
+      - JWT_PRIVATE_KEY_PASSWORD
+      - APP_BASE_ADDRESS
     volumes:
+      ### Shared ###
       - ${VOLUMES_PATH}/backend/shared/data-protection/keys:/root/.aspnet/DataProtection-Keys
-      - ${VOLUMES_PATH}/backend/shared/data-protection/certificates:/app/certificates
+      - ${VOLUMES_PATH}/backend/shared/data-protection:/app/shared/data-protection
+      - ${VOLUMES_PATH}/backend/shared/authentication:/app/shared/authentication
+      ### Accounts ###
+      - ${VOLUMES_PATH}/backend/accounts:/app/accounts
 
   db:
     image: postgres:16.1

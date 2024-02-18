@@ -1,9 +1,9 @@
 services:
   nginx:
     volumes:
-      - ./docker-dev-volumes/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./docker-dev-volumes/nginx/ssl/ssl.crt:/etc/nginx/ssl/ssl.crt:ro
-      - ./docker-dev-volumes/nginx/ssl/ssl.key:/etc/nginx/ssl/ssl.key:ro
+      - ./volumes/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./volumes/nginx/ssl.crt:/etc/nginx/ssl/ssl.crt:ro
+      - ./volumes/nginx/ssl.key:/etc/nginx/ssl/ssl.key:ro
 
   client:
     build:
@@ -19,20 +19,32 @@ services:
       dockerfile: Api/Dockerfile.development
     restart: on-failure
     environment:
-      - DEBUG_MODE
+      ### Shared ###
+      # Debugging
+      - DEBUG_MODE=false
       - DEBUG_MODE_ATTACH_PROCESS_WAITING_PERIOD_SECONDS=60
     volumes:
-      # Use development data protection certificates
-      - ./docker-dev-volumes/backend/shared/data-protection/certificates:/app/certificates:ro
-      # Enable dotnet file watch and hot reloading
-      - ./backend:/src:delegated
-      # API
-      - /src/Api/obj
-      - /src/Api/bin
-      # Shared
+      ### Shared ###
+      # Allow source code file watching
+      - ./backend/Shared:/src/Shared:delegated
+      # Use development volumes
+      - ./volumes/backend/shared/data-protection:/app/shared/data-protection:ro
+      - ./volumes/backend/shared/authentication:/app/shared/authentication:ro
+      # Improve performance and allow hot reloading
       - /src/Shared/obj
       - /src/Shared/bin
-      # Accounts
+      ### API ###
+      # Allow source code file watching
+      - ./backend/Api:/src/Api:delegated
+      # Improve performance and allow hot reloading
+      - /src/Api/obj
+      - /src/Api/bin
+      ### Accounts ###
+      # Allow source code file watching
+      - ./backend/Accounts:/src/Accounts:delegated
+      # Use development volumes
+      - ./volumes/backend/accounts:/app/accounts:ro
+      # Improve performance and allow hot reloading
       - /src/Accounts/Accounts/obj
       - /src/Accounts/Accounts/bin
       - /src/Accounts/Accounts.Contracts/obj
