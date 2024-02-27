@@ -64,7 +64,6 @@ services:
       # Messaging
       - RABBITMQ_USER
       - RABBITMQ_PASSWORD
-      - APP_BASE_ADDRESS
       ### Accounts ###
       - JWT_PRIVATE_KEY_PASSWORD
       - APP_BASE_ADDRESS
